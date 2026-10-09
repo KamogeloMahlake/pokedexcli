@@ -2,10 +2,9 @@ package repl
 
 import "fmt"
 
-func commandHelp() error {
+func commandHelp(conf *config) error {
 	fmt.Println("Welcome to the Pokedex!")
 	fmt.Println("Usage:")
-	fmt.Println()
 	fmt.Println()
 
 	for _, c := range getCommandsMap() {

@@ -8,9 +8,14 @@ import (
 
 
 func StartPokedex() {
+	cfg := &config{
+		commands: getCommandsMap(),
+		next: nil,
+		previous: nil,
+	}
+
 	scanner := bufio.NewScanner(os.Stdin)
-	commands := getCommandsMap()
-		
+
 	for {
 		fmt.Print("Pokedex > ")
 		if !scanner.Scan() {
@@ -18,9 +23,10 @@ func StartPokedex() {
 		}
 		
 		input:= cleanInput(scanner.Text())
-		command, exists := commands[input[0]]
+
+		command, exists := cfg.commands[input[0]]
 		if exists {
-			err := command.callback()
+			err := command.callback(cfg)
 			
 			if err != nil {
 				fmt.Println("Error:", err)
