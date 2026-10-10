@@ -1,17 +1,24 @@
 package repl
+
 import (
+	"bufio"
 	"fmt"
 	"os"
-	"bufio"
 	"strings"
+	"time"
+
+	"github.com/KamogeloMahlake/pokedexcli/internal/pokeapi"
+	"github.com/KamogeloMahlake/pokedexcli/internal/pokecache"
 )
 
 
 func StartPokedex() {
-	cfg := &config{
+	Cfg := &Config{
 		commands: getCommandsMap(),
 		next: nil,
 		previous: nil,
+		cache: pokecache.NewCache(5 * time.Minute),
+		client: pokeapi.Client{},
 	}
 
 	scanner := bufio.NewScanner(os.Stdin)
@@ -24,9 +31,9 @@ func StartPokedex() {
 		
 		input:= cleanInput(scanner.Text())
 
-		command, exists := cfg.commands[input[0]]
+		command, exists := Cfg.commands[input[0]]
 		if exists {
-			err := command.callback(cfg)
+			err := command.callback(Cfg)
 			
 			if err != nil {
 				fmt.Println("Error:", err)

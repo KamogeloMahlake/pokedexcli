@@ -1,6 +1,9 @@
 package repl
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 type Locations struct {
 	Count    int    `json:"count"`
@@ -13,57 +16,75 @@ type Locations struct {
 }
 
 
-
-func commandMap(conf *config) error {
+func printLocations(data []byte, conf *Config) error{
 	var location Locations
-
-	if conf.next != nil {
-		err := fetch(*conf.next, &location)
-		
-		if err != nil {
-			return  err
-		}
-		conf.next = location.Next
-		conf.previous = location.Previous
-
-		for _, result := range location.Results {
-			
-			fmt.Printf(" - %s\n", result.Name)
-		}
-		return nil
-	}
-
-	err := fetch(baseUrl + "location", &location)
-
-	if err != nil {
+	
+	if err := json.Unmarshal(data, &location); err != nil {
 		return err
 	}
-  conf.next = location.Next
+	
+	conf.next = location.Next
 	conf.previous = location.Previous
+	
 	for _, result := range location.Results {
-
 		fmt.Printf(" - %s\n", result.Name)
 	}
-
-
 	return nil
 }
 
-func mapB(conf *config) error {
-	var location Locations
-	if conf.previous != nil {
-		err := fetch(*conf.previous, &location)
+
+func commandMap(conf *Config) error {
+  if conf.next != nil {
+    if data, exists := conf.cache.Get(*conf.next); exists {
+		
+			fmt.Println("Using cache")
+		 	return  printLocations(data, conf)
+		}
+	}
+
+	if conf.next != nil {				
+		data, err := conf.client.GetData(*conf.next)
 		
 		if err != nil {
 			return  err
 		}
-		conf.next = location.Next
-		conf.previous = location.Previous
 
-		for _, result := range location.Results {
-			fmt.Printf(" - %s\n", result.Name)
+		conf.cache.Add(*conf.next, data)
+
+		return printLocations(data, conf)
+	}
+
+	url := baseUrl + "location"
+	data, err := conf.client.GetData(url)
+		
+	if err != nil {
+		return  err
+	}
+
+	conf.cache.Add(url, data)
+
+	return printLocations(data, conf)
+}
+
+func mapB(conf *Config) error {
+
+	if conf.previous != nil {
+	  if data, exists := conf.cache.Get(*conf.previous); exists {
+			fmt.Println("Using cache")
+			return printLocations(data, conf)
 		}
-		return nil
+	}
+
+	if conf.previous != nil {
+		data, err := conf.client.GetData(*conf.previous)
+		
+		if err != nil {
+			return  err
+		}
+
+		conf.cache.Add(*conf.previous, data)
+
+		return printLocations(data, conf)
 	}
 	
 	fmt.Println("No previous page")

@@ -1,16 +1,23 @@
 package repl
 
-type config struct {
+import (
+	"github.com/KamogeloMahlake/pokedexcli/internal/pokeapi"
+	"github.com/KamogeloMahlake/pokedexcli/internal/pokecache"
+)
+
+type Config struct {
 	commands map[string]cliCommand
 	next *string
 	previous *string
+	cache pokecache.Cache
+	client pokeapi.Client
 }
 
 
 type cliCommand struct {
 	name string 
 	description string
-	callback func(*config) error
+	callback func(*Config) error
 }
 
 func getCommandsMap() map[string]cliCommand {
